@@ -1,10 +1,17 @@
+# Webアプリケーションフレームワーク
 streamlit==1.53.0
+
+# 数値計算・データ処理
 numpy==2.4.1
 scipy==1.17.0
 pandas==2.3.3
+
+# ベイズ統計・機械学習
 pymc>=5.0.0
 arviz>=0.18.0
-pgmpy>=0.1.23
+pgmpy==1.0.0
 scikit-learn>=1.3.0
+
+# 可視化
 altair>=5.0.0
-graphviz>=0.21.0
+graphviz>=0.21.0  # Pythonバインディングのみ、本体は別途

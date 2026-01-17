@@ -52,9 +52,9 @@ st.info("""
 """)
 
 # ============================================
-# 全支援要請のCursor表表示
+# 全支援要請の表表示
 # ============================================
-st.header("📊 全支援要請一覧（Cursor表）")
+st.header("📊 全支援要請一覧")
 
 # 全支援要請データを取得
 all_requests = get_all_requests()
@@ -280,11 +280,50 @@ try:
     
     try:
         from bn_model import build_bn
+        import subprocess
+        import os
         
+        # Graphvizのパスを確認
+        graphviz_paths = [
+            "/opt/homebrew/bin/dot",
+            "/usr/local/bin/dot",
+            "/usr/bin/dot"
+        ]
+        graphviz_found = False
+        for path in graphviz_paths:
+            if os.path.exists(path):
+                # PATHに追加（StreamlitがGraphvizを見つけられるように）
+                current_path = os.environ.get("PATH", "")
+                if path not in current_path:
+                    os.environ["PATH"] = f"{os.path.dirname(path)}:{current_path}"
+                graphviz_found = True
+                break
+        
+        # Graphvizが利用可能か確認
+        try:
+            graphviz_result = subprocess.run(
+                ["dot", "-V"],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            graphviz_available = graphviz_result.returncode == 0
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            graphviz_available = False
+        
+        if not graphviz_available:
+            st.warning(f"""
+            **Graphvizが見つかりません**
+            - Graphviz本体のパス: {graphviz_paths[0] if graphviz_found else '見つかりませんでした'}
+            - 環境変数PATHにGraphvizのbinディレクトリが含まれているか確認してください
+            - 例: `export PATH="/opt/homebrew/bin:$PATH"`
+            """)
+        
+        # BNモデルを構築
         bn_model = build_bn()
         if bn_model is not None:
             # DAGをGraphviz DOT形式の文字列として生成
-            dot_lines = ['digraph G {', 'rankdir=LR;']
+            dot_lines = ['digraph G {', 'rankdir=LR;', 'node [shape=box];']
             
             # ノードを追加
             for node in bn_model.nodes():
@@ -298,7 +337,13 @@ try:
             dot_source = '\n'.join(dot_lines)
             
             # Streamlitで表示
-            st.graphviz_chart(dot_source)
+            if graphviz_available:
+                st.graphviz_chart(dot_source)
+            else:
+                # Graphvizが利用できない場合、DOTソースを表示
+                with st.expander("DOTソースコード（Graphvizが利用できないため）", expanded=False):
+                    st.code(dot_source, language="dot")
+                st.info("Graphvizが利用できないため、グラフを表示できません。上記のDOTソースをコピーして、オンラインのGraphvizビューアーで表示できます。")
             
             st.caption("""
             **ベイジアンネットワーク構造**  
@@ -307,10 +352,12 @@ try:
             """)
         else:
             st.info("pgmpyが利用できないため、BN可視化をスキップします。")
-    except ImportError:
-        st.warning("graphvizがインストールされていません。BN可視化をスキップします。")
+    except ImportError as e:
+        st.warning(f"必要なモジュールがインポートできません: {str(e)}")
+        st.info("pgmpyがインストールされているか確認してください: `pip install pgmpy`")
     except Exception as e:
         st.warning(f"BN可視化中にエラーが発生しました: {str(e)}")
+        st.exception(e)
     
     # ============================================
     # 詳細な統計情報

@@ -14,12 +14,21 @@ import numpy as np
 
 # pgmpyのインポート（オプショナル）
 try:
-    from pgmpy.models import BayesianNetwork
+    # pgmpy 1.0.0以降では DiscreteBayesianNetwork を使用
+    try:
+        from pgmpy.models import DiscreteBayesianNetwork
+        BAYESIAN_NETWORK_CLASS = DiscreteBayesianNetwork
+    except ImportError:
+        # 旧バージョンの互換性
+        from pgmpy.models import BayesianNetwork
+        BAYESIAN_NETWORK_CLASS = BayesianNetwork
+    
     from pgmpy.factors.discrete import TabularCPD
     from pgmpy.inference import VariableElimination
     PGMPY_AVAILABLE = True
 except ImportError:
     PGMPY_AVAILABLE = False
+    BAYESIAN_NETWORK_CLASS = None
 
 
 # グローバル変数：モデルと推論エンジン
@@ -52,7 +61,7 @@ def build_bn() -> Any:
     
     # ベイジアンネットワークの構造を定義
     # DAG: region → population_density → past_severity → urgency_weight → priority_score
-    model = BayesianNetwork([
+    model = BAYESIAN_NETWORK_CLASS([
         ("region", "population_density"),
         ("population_density", "past_severity"),
         ("past_severity", "urgency_weight"),
@@ -87,14 +96,29 @@ def build_bn() -> Any:
     
     # 過去被害規模（高、中、低の3状態）
     # 条件：人口密度に依存
+    # 注意：各列の合計が1になるように正規化
     cpd_past_severity = TabularCPD(
         variable="past_severity",
         variable_card=3,
         values=[
-            [0.3, 0.5, 0.7],  # 人口密度が高い場合
-            [0.4, 0.4, 0.4],  # 人口密度が中程度の場合
-            [0.5, 0.3, 0.2]   # 人口密度が低い場合
+            [0.3, 0.4, 0.5],  # 人口密度が高い場合（合計=1.2 → 正規化）
+            [0.4, 0.4, 0.3],  # 人口密度が中程度の場合（合計=1.1 → 正規化）
+            [0.3, 0.2, 0.5]   # 人口密度が低い場合（合計=1.0）
         ],
+        evidence=["population_density"],
+        evidence_card=[3],
+        state_names={
+            "past_severity": ["高", "中", "低"],
+            "population_density": ["高", "中", "低"]
+        }
+    )
+    # 正規化（各列の合計を1にする）
+    values = cpd_past_severity.values
+    normalized_values = values / values.sum(axis=0, keepdims=True)
+    cpd_past_severity = TabularCPD(
+        variable="past_severity",
+        variable_card=3,
+        values=normalized_values,
         evidence=["population_density"],
         evidence_card=[3],
         state_names={
@@ -105,14 +129,18 @@ def build_bn() -> Any:
     
     # 緊急度（高、中、低の3状態）
     # 条件：過去被害規模に依存
+    # 注意：各列の合計が1になるように正規化
+    urgency_values = np.array([
+        [0.7, 0.5, 0.3],  # 過去被害規模が高い場合
+        [0.2, 0.5, 0.4],  # 過去被害規模が中程度の場合
+        [0.1, 0.0, 0.3]   # 過去被害規模が低い場合
+    ])
+    # 正規化（各列の合計を1にする）
+    urgency_values = urgency_values / urgency_values.sum(axis=0, keepdims=True)
     cpd_urgency = TabularCPD(
         variable="urgency_weight",
         variable_card=3,
-        values=[
-            [0.7, 0.5, 0.3],  # 過去被害規模が高い場合
-            [0.2, 0.5, 0.4],  # 過去被害規模が中程度の場合
-            [0.1, 0.0, 0.3]   # 過去被害規模が低い場合
-        ],
+        values=urgency_values,
         evidence=["past_severity"],
         evidence_card=[3],
         state_names={
@@ -123,14 +151,18 @@ def build_bn() -> Any:
     
     # 優先度スコア（高、中、低の3状態）
     # 条件：緊急度に依存
+    # 注意：各列の合計が1になるように正規化
+    priority_values = np.array([
+        [0.8, 0.5, 0.2],  # 緊急度が高い場合
+        [0.15, 0.4, 0.5],  # 緊急度が中程度の場合
+        [0.05, 0.1, 0.3]   # 緊急度が低い場合
+    ])
+    # 正規化（各列の合計を1にする）
+    priority_values = priority_values / priority_values.sum(axis=0, keepdims=True)
     cpd_priority = TabularCPD(
         variable="priority_score",
         variable_card=3,
-        values=[
-            [0.8, 0.5, 0.2],  # 緊急度が高い場合
-            [0.15, 0.4, 0.5],  # 緊急度が中程度の場合
-            [0.05, 0.1, 0.3]   # 緊急度が低い場合
-        ],
+        values=priority_values,
         evidence=["urgency_weight"],
         evidence_card=[3],
         state_names={
