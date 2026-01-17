@@ -20,21 +20,29 @@
 ---
 
 ## 🚀 クイックスタート
-推奨 Python バージョン: **3.11–3.12**
 
 ```bash
-# リポジトリをクローン
+# 1. 推奨 Python バージョン（pyenv 利用可）
+# Python 3.11 または 3.12 推奨
+pyenv install 3.12.2       # インストール
+pyenv local 3.12.2         # プロジェクト内のみ有効化
+
+# 2. リポジトリのクローン
 git clone <repository-url>
 cd bayesian-disaster-priority
 
-# 仮想環境作成・有効化
+# 3. 仮想環境の作成と有効化
 python -m venv venv
 source venv/bin/activate  # macOS/Linux
 # venv\Scripts\activate   # Windows
 
-# pip 更新 & 依存パッケージインストール
+# 4. 依存パッケージのインストール
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# アプリ起動
+# 5. アプリ起動
 streamlit run app.py
+
+# ⚠️ 注意
+# Graphviz 本体がない場合、BN 可視化はスキップされますが、
+# アプリ本体は正常に動作します。
