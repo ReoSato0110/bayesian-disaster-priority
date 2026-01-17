@@ -19,17 +19,18 @@
 
 ---
 
-## 🚀 クイックスタート
+## 🚀 クイックスタート（IDE向け）
 
 ```bash
-# 1. 推奨 Python バージョン（pyenv 利用可）
-# Python 3.11 または 3.12 推奨
-pyenv install 3.12.2       # インストール
-pyenv local 3.12.2         # プロジェクト内のみ有効化
-
-# 2. リポジトリのクローン
+# 1. リポジトリのクローン
 git clone <repository-url>
 cd bayesian-disaster-priority
+
+
+# 2. 推奨 Python バージョン（pyenv 利用可）
+# Python 3.11 または 3.12 推奨
+pyenv install 3.12.2       # 必要な場合
+pyenv local 3.12.2         # プロジェクト内のみ有効化
 
 # 3. 仮想環境の作成と有効化
 python -m venv venv
