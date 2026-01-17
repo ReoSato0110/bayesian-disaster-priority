@@ -15,7 +15,7 @@
   - ベイジアンネットワーク（pgmpy）
   - ナイーブベイズ（scikit-learn）
 
-### アプリの内部計算・手法の詳細は `TECHNICAL.md` にまとめています。 
+### アプリの内部計算・手法の詳細は以下折りたたみの`TECHNICAL.md` にまとめています。 
 
 <details>
 <summary>TECHNICAL.md の詳細を見る</summary>
@@ -461,7 +461,8 @@ pip install -r requirements.txt
 # アプリ起動
 streamlit run app.py
 
-Graphviz 本体がない場合、BN 可視化はスキップされます。アプリ本体は正常に動作します。
+**⚠️ 注意:** Graphviz 本体がない場合、BN 可視化はスキップされます。アプリ本体は正常に動作します。
+
 
 ---
 
