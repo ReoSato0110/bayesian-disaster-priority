@@ -24,6 +24,10 @@ _SAMPLE_REQUESTS: List[SupportRequest] = [
         "id": 1,
         "title": "高齢者世帯・停電3日目",
         "description": "80代夫婦のみの世帯。停電が3日間続いており、冷蔵庫内の食料が心配。近隣からの報告によると、過去に同様の状況で支援が必要だった。",
+        "region": "都市部",
+        "disaster_type": "停電",
+        "population_density": 0.85,
+        "past_severity": 0.7,
         "successes": 15,
         "total_trials": 20,
         "urgency_weight": 0.9
@@ -32,6 +36,10 @@ _SAMPLE_REQUESTS: List[SupportRequest] = [
         "id": 2,
         "title": "孤立集落・道路寸断",
         "description": "山間部の集落で道路が寸断され、外部との連絡が取れない状態。数時間前に初めて報告があったばかりで、データは少ないが状況は深刻。",
+        "region": "山間部",
+        "disaster_type": "土砂災害",
+        "population_density": 0.15,
+        "past_severity": 0.9,
         "successes": 1,
         "total_trials": 3,
         "urgency_weight": 0.95
@@ -40,6 +48,10 @@ _SAMPLE_REQUESTS: List[SupportRequest] = [
         "id": 3,
         "title": "避難所・物資不足の可能性",
         "description": "地域の避難所から定期的に報告が上がっている。過去のデータでは支援が必要なケースが多いが、今回はまだ緊急度は中程度と判断されている。",
+        "region": "郊外",
+        "disaster_type": "洪水",
+        "population_density": 0.5,
+        "past_severity": 0.6,
         "successes": 25,
         "total_trials": 30,
         "urgency_weight": 0.2
@@ -48,6 +60,10 @@ _SAMPLE_REQUESTS: List[SupportRequest] = [
         "id": 4,
         "title": "医療機関・発電機故障",
         "description": "地域の診療所で発電機が故障。過去の類似事例では支援が必要だったケースと不要だったケースが半々程度。緊急度は中程度。",
+        "region": "都市部",
+        "disaster_type": "停電",
+        "population_density": 0.75,
+        "past_severity": 0.4,
         "successes": 5,
         "total_trials": 10,
         "urgency_weight": 0.5
@@ -56,6 +72,10 @@ _SAMPLE_REQUESTS: List[SupportRequest] = [
         "id": 5,
         "title": "子育て世帯・断水2日目",
         "description": "乳幼児を含む家族。断水が2日間続いている。過去のデータでは、このようなケースで支援が必要だった割合は比較的高い。",
+        "region": "郊外",
+        "disaster_type": "断水",
+        "population_density": 0.6,
+        "past_severity": 0.65,
         "successes": 12,
         "total_trials": 15,
         "urgency_weight": 0.75
@@ -78,6 +98,10 @@ def get_all_requests() -> List[SupportRequest]:
         - id: int（要請ID）
         - title: str（要請タイトル）
         - description: str（状況説明）
+        - region: str（地域名）
+        - disaster_type: str（災害種類）
+        - population_density: float（人口密度、0.0〜1.0）
+        - past_severity: float（過去被害規模、0.0〜1.0）
         - successes: int（過去に支援が必要だった回数）
         - total_trials: int（報告・観測回数）
         - urgency_weight: float（緊急度、0.0〜1.0）
@@ -114,6 +138,10 @@ def get_request_by_id(request_id: int) -> Optional[SupportRequest]:
         - id: int（要請ID）
         - title: str（要請タイトル）
         - description: str（状況説明）
+        - region: str（地域名）
+        - disaster_type: str（災害種類）
+        - population_density: float（人口密度、0.0〜1.0）
+        - past_severity: float（過去被害規模、0.0〜1.0）
         - successes: int（過去に支援が必要だった回数）
         - total_trials: int（報告・観測回数）
         - urgency_weight: float（緊急度、0.0〜1.0）
@@ -137,6 +165,47 @@ def get_request_by_id(request_id: int) -> Optional[SupportRequest]:
     
     # 該当するIDが見つからない場合
     return None
+
+
+def add_new_request(data: Dict[str, Any]) -> None:
+    """
+    新しい支援要請データを追加する
+    
+    注意：この関数はメモリ内のデータに追加します。
+    実運用を想定したものではなく、デモ・学習目的でのみ使用してください。
+    データはアプリ再起動時にリセットされます。
+    
+    Parameters
+    ----------
+    data : Dict[str, Any]
+        追加する支援要請データ
+        必須キー: id, title, description, region, disaster_type,
+                 population_density, past_severity, successes,
+                 total_trials, urgency_weight
+    
+    Examples
+    --------
+    >>> new_request = {
+    ...     "id": 6,
+    ...     "title": "新規要請",
+    ...     "description": "説明",
+    ...     "region": "都市部",
+    ...     "disaster_type": "地震",
+    ...     "population_density": 0.8,
+    ...     "past_severity": 0.6,
+    ...     "successes": 8,
+    ...     "total_trials": 12,
+    ...     "urgency_weight": 0.7
+    ... }
+    >>> add_new_request(new_request)
+    """
+    # 既存のIDと重複していないか確認
+    existing_ids = {req["id"] for req in _SAMPLE_REQUESTS}
+    if data.get("id") in existing_ids:
+        raise ValueError(f"ID {data.get('id')} は既に存在します")
+    
+    # データを追加
+    _SAMPLE_REQUESTS.append(data.copy())
 
 
 if __name__ == "__main__":
